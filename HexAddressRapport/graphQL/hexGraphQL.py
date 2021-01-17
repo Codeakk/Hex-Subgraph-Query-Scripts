@@ -15,130 +15,133 @@ class Event:
         self.template = template
 
 
-events = [Event('xfLobbyEnters',
-                """
-                  query getXfLobbyEnters {{
-                    xfLobbyEnters(first: {0}, skip: {1}
-                                ,orderBy: rawAmount
-                                ,orderDirection: desc
-                                ,where: {{
-                                    xfLobbyExit: null 
-                                }}
-                                ) {{
-                          id
-                          enterDay
-                          memberAddr
-                          referrerAddr
-                          entryId
-                          rawAmount
-                          timestamp
-                          data0
-                        }}
-                  }}
-              """
-                ),
-          Event('dailyDataUpdates',
-                """
-                           query getDailyDataUpdates {{
-                             dailyDataUpdates(first: {0}, skip: {1}
-                                         ,orderBy: endDay
-                                         ,orderDirection: asc
-                                         ) {{
-                                   id
-                                   endDay
-                                   payoutPerTShare
-                                   payout
-                                   shares
-                                   sats
-                                   blockNumber
-                                   timestamp
-                                   lobbyEth
-                                   lobbyHexPerEth
-                                   lobbyHexAvailable
+events = [
+    Event('xfLobbyEnters',
+          """
+                query getXfLobbyEnters {{
+                xfLobbyEnters(first: {0}, skip: {1}
+                            ,orderBy: rawAmount
+                            ,orderDirection: desc
+                            ,where: {{
+                                xfLobbyExit: null 
+                            }}
+                            ) {{
+                      id
+                      enterDay
+                      memberAddr
+                      referrerAddr
+                      entryId
+                      rawAmount
+                      timestamp
+                      data0
+                    }}
+                }}
+            """
+          ),
+    Event('dailyDataUpdates',
+          """
+                query getDailyDataUpdates {{
+                 dailyDataUpdates(first: {0}, skip: {1}
+                             ,orderBy: endDay
+                             ,orderDirection: asc
+                             ) {{
+                       id
+                       endDay
+                       payoutPerTShare
+                       payout
+                       shares
+                       sats
+                       blockNumber
+                       timestamp
+                       lobbyEth
+                       lobbyHexPerEth
+                       lobbyHexAvailable
+                     }}
+                }}
+            """
+          ),
+    Event('tokenHolders',
+          """
+               query getTokenHolders {{
+                tokenHolders(
+                    first: {0}, skip: {1} 
+                    {2} 
+                ) 
+                {{
+                    tokenBalance
+                 }}
+               }}
+            """
+          )
+]
+events_by_generic_number = [
+    Event('transfers',
+        """
+                query getTransfers {{
+                transfers(
+                    first: {0}, skip: {1}
+                    ,orderBy:timestamp
+                    ,orderDirection:asc
+                    ,where: {{ 
+                        {3}_gte:{2} 
+                    {4}
+                    }}
+                ) 
+                    {{
+                        from
+                        to
+                        timestamp
+                        value
+                    }}
+                }}
+            """
+          ),
+    Event('tokenHolders',
+          """
+                   query getTokenHolders {{
+                     tokenHolders(first: {0}, skip: {1}
+                                 ,orderBy:numeralIndex
+                                 ,orderDirection: asc
+                                 ,where: {{
+                                    {3}_gte:{2}
+                                 }}
+                                 ) 
+                         {{
+                            numeralIndex
+                            holderAddress
+                         }}
+                   }}
+               """
+          ),
+    Event('stakeStarts',
+          """
+                   query getDueStakes {{
+                     stakeStarts(first: {0}, skip: {1}
+                                 ,orderBy: stakeId
+                                 ,orderDirection: asc
+                                 , where: {{ 
+                                        stakeEnd: null
+                                        ,stakeGoodAccounting: null
+                                        ,{3}_gte:{2} 
+                                    }}
+                                 ) 
+                                {{
+                                    id
+                                    stakedDays
+                                    stakerAddr
+                                    stakeId
+                                    startDay
+                                    endDay
+                                    timestamp 
+                                    stakeShares
+                                    stakedHearts
+                                    blockNumber
+                                    data0 
                                  }}
                            }}
-                       """
-                ),
-          Event('stakeStarts',
-                """
-                               query getDueStakes {{
-                                 stakeStarts(first: {0}, skip: {1}
-                                             ,orderBy: stakeId
-                                             ,orderDirection: asc
-                                             , where: {{ 
-                                                    stakeEnd: null
-                                                    ,stakeGoodAccounting: null
-                                                    ,{3}_gte:{2} 
-                                                }}
-                                             ) 
-                                            {{
-                                                id
-                                                stakedDays
-                                                stakerAddr
-                                                stakeId
-                                                startDay
-                                                endDay
-                                                timestamp 
-                                                stakeShares
-                                                stakedHearts
-                                                blockNumber
-                                                data0 
-                                             }}
-                                       }}
-                                   """
-                ),
-          Event('tokenHolders',
-                """
-                                       query getTokenHolders {{
-                                         tokenHolders(first: {0}, skip: {1}
-                                                     ,orderBy:numeralIndex
-                                                     ,orderDirection: asc
-                                                     ,where: {{
-                                                        {3}_gte:{2}
-                                                     }}
-                                                     ) 
-                                             {{
-                                                numeralIndex
-                                                holderAddress
-                                             }}
-                                       }}
-                                   """
-                ),
-          Event('transfers',
-                """
-                                       query getTransfers {{
-                                        transfers(
-                                            first: {0}, skip: {1}
-                                            ,orderBy:timestamp
-                                            ,orderDirection:asc
-                                            ,where: {{ 
-                                            {3}_gte:{2} 
-                                            {4}
-                                            }}
-                                        ) 
-                                        {{
-                                            from
-                                            to
-                                            timestamp
-                                            value
-                                         }}
-                                       }}
-                                   """
-                ),
-          Event('tokenHolders',
-                """
-                                       query getTokenHolders {{
-                                        tokenHolders(
-                                            first: {0}, skip: {1} 
-                                            {2} 
-                                        ) 
-                                        {{
-                                            tokenBalance
-                                         }}
-                                       }}
-                                   """
-                )
-          ]
+               """
+          )
+]
 
 
 def query_constructor(first, skip, event_name, custom_where):
@@ -154,7 +157,7 @@ def query_constructor(first, skip, event_name, custom_where):
 
 def query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field):
     event_template = ""
-    for event in events:
+    for event in events_by_generic_number:
         if event.event_name == event_name:
             event_template = event
     template = event_template.template
@@ -177,7 +180,7 @@ def query_cycle(event_name, custom_where=""):
             for event in call_data[event_name]:
                 result_array.append(event)
             skip = skip + first
-            #print(len(result_array))
+            # print(len(result_array))
             # first = first - 1  # escape early for testing
             query = query_constructor(first, skip, event_name, custom_where)
         except Exception as e:
@@ -201,18 +204,18 @@ def query_cycle_by_generic_number_field(event_name, field, generic_number_start,
     call_data = client.execute(query)
     result_array = call_data[event_name]
     latest_generic_number = find_latest_generic_result(result_array, field)
-    #print(latest_generic_number)
+    #print(result_array)
     generic_number = latest_generic_number + 1
     query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
     while len(call_data[event_name]) > 0:
         try:
             call_data = client.execute(query)
             for event in call_data[event_name]:
-                # print(event)
+                #print(event)
                 result_array.append(event)
             latest_generic_number = find_latest_generic_result(call_data[event_name], field)
             generic_number = latest_generic_number + 1
-            #print(generic_number)
+            # print(generic_number)
             query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
         except Exception as e:
             time.sleep(1)
