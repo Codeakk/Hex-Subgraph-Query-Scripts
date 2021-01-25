@@ -1,7 +1,6 @@
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 import time
-from pydash import _
 
 transport = AIOHTTPTransport(url="https://api.thegraph.com/subgraphs/name/codeakk/hex")
 # transport = AIOHTTPTransport(url="https://api.thegraph.com/subgraphs/id/QmWcqEQm2jwQvK2TtYRhhzt2hJjnPCbQhyoxq6rADCwRWd")
@@ -140,7 +139,30 @@ events_by_generic_number = [
                                  }}
                            }}
                """
-          )
+          ),
+Event('pairHourDatas',
+    """
+        query getPairHourDatas {{
+            pairHourDatas(
+                    first: {0}
+                    ,skip: {1}
+                    ,orderBy: hourStartUnix
+                    ,orderDirection: desc
+                    ,where:{{
+                        {4}
+                        ,{3}_gte:{2} 
+                    }}
+                    
+                     ) 
+                    {{
+                        hourStartUnix
+                        reserve0
+                        reserve1
+                        hourlyVolumeUSD
+                     }}
+        }}
+       """
+    )
 ]
 
 
@@ -210,6 +232,37 @@ def query_cycle_by_generic_number_field(event_name, field, generic_number_start,
     while len(call_data[event_name]) > 0:
         try:
             call_data = client.execute(query)
+            for event in call_data[event_name]:
+                #print(event)
+                result_array.append(event)
+            latest_generic_number = find_latest_generic_result(call_data[event_name], field)
+            generic_number = latest_generic_number + 1
+            # print(generic_number)
+            query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
+        except Exception as e:
+            time.sleep(1)
+            print(e)
+    return result_array
+
+
+def uniswap_query_cycle_by_generic_number_field(event_name, field, generic_number_start, custom_where_field="") -> object:
+
+    _transport = AIOHTTPTransport(url="https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2")
+
+    _client = Client(transport=_transport, fetch_schema_from_transport=True)
+
+    first = 1000
+    skip = 0
+    generic_number = generic_number_start
+    query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
+    call_data = _client.execute(query)
+    result_array = call_data[event_name]
+    latest_generic_number = find_latest_generic_result(result_array, field)
+    generic_number = latest_generic_number + 1
+    query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
+    while len(call_data[event_name]) > 0:
+        try:
+            call_data = _client.execute(query)
             for event in call_data[event_name]:
                 #print(event)
                 result_array.append(event)
