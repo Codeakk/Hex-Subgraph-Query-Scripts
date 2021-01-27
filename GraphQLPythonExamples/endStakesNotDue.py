@@ -1,10 +1,7 @@
-import csv
 from graphQL import hexGraphQL
 from datetime import date
 from pydash import _
 import datetime
-import os
-import json
 import math
 import time
 
@@ -41,26 +38,27 @@ class Json_Shell:
 
 
 def pair_stakes_to_epoch_days(stakes):
-	global masterStakeByDays
-	_.for_each(stakes, create_array_of_start_stake_by_date)
-	seconds_in_day = 86400
-	for y in masterStakeByDays:
-		currentTimeInSeconds = time.time()
-		current_epoch_day = math.trunc(currentTimeInSeconds / seconds_in_day)
-		if y['epochDay'] > current_epoch_day:
-			#print(y)
-			empty_stake = {
-					"stakeId": 0,
-					"stakeEndInSeconds": y['epochDayInSeconds'],
-					"stakedHearts": 0
-				}
-			y['stakes'].append(empty_stake)
-	print("almost done")
-	str_master_stake_by_days = "{ \"result\":" + str(masterStakeByDays).replace('\'', "\"") + "}"
-	with open(discoveredStakesPath + '1.json', 'w') as f:
-		f.write(str(str_master_stake_by_days))  # json.dump(arrayToWriteToFile, f)
-	with open(discoveredStakesPath2 + '1.json', 'w') as f:
-		f.write(str(str_master_stake_by_days))  # json.dump(arrayToWriteToFile, f)
+    global masterStakeByDays
+    _.for_each(stakes, create_array_of_start_stake_by_date)
+    seconds_in_day = 86400
+    for y in masterStakeByDays:
+        currentTimeInSeconds = time.time()
+        current_epoch_day = math.trunc(currentTimeInSeconds / seconds_in_day)
+        if y['epochDay'] > current_epoch_day:
+            print(y)
+            empty_stake = {
+                    "stakeId": 0,
+                    "stakeEndInSeconds": y['epochDayInSeconds'],
+                    "stakedHearts": 0
+                }
+            y['stakes'].append(empty_stake)
+            print(y)
+    print("almost done")
+    str_master_stake_by_days = "{ \"result\":" + str(masterStakeByDays).replace('\'', "\"") + "}"
+    with open(discoveredStakesPath + '1.json', 'w') as f:
+        f.write(str(str_master_stake_by_days))  # json.dump(arrayToWriteToFile, f)
+    #with open(discoveredStakesPath2 + '1.json', 'w') as f:
+    #    f.write(str(str_master_stake_by_days))  # json.dump(arrayToWriteToFile, f)
 
 
 def create_array_of_start_stake_by_date(x):
@@ -85,7 +83,7 @@ def create_array_of_start_stake_by_date(x):
             y['stakes'].append(x)
 
 
-discoveredStakesPath = 'C:\\web\\endStakesNotDue'  # 'C:\\web\\endStakesNotDue'
+discoveredStakesPath = 'endStakesNotDue' #'C:\\web\\endStakesNotDue'  # 'C:\\web\\endStakesNotDue'
 discoveredStakesPath2 = 'C:\\webPRELIM\\endStakesNotDue'
 masterStakeByDays = []
 secondsInDay = 86400
@@ -118,7 +116,12 @@ csv_columns = ['id',
                'lobbyHexPerEth',
                'lobbyHexAvailable'
                ]
-start_stake_data_results = hexGraphQL.query_cycle_by_block_number('stakeStarts')
+where = """
+             stakeEnd: null
+            ,stakeGoodAccounting: null
+        """
+where = where.format()
+start_stake_data_results = hexGraphQL.query_cycle_by_generic_number_field('stakeStarts', 'blockNumber', 9041184, where)
 print(len(start_stake_data_results))
 arrayOfStartStakesNotDue = []
 for stake in start_stake_data_results:

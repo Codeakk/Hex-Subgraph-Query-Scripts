@@ -71,11 +71,11 @@ events = [
                  }}
                }}
             """
-          )
+          ) 
 ]
 events_by_generic_number = [
     Event('transfers',
-        """
+          """
                 query getTransfers {{
                 transfers(
                     first: {0}, skip: {1}
@@ -119,9 +119,8 @@ events_by_generic_number = [
                                  ,orderBy: stakeId
                                  ,orderDirection: asc
                                  , where: {{ 
-                                        stakeEnd: null
-                                        ,stakeGoodAccounting: null
                                         ,{3}_gte:{2} 
+                                        {4}
                                     }}
                                  ) 
                                 {{
@@ -133,15 +132,23 @@ events_by_generic_number = [
                                     endDay
                                     timestamp 
                                     stakeShares
+                                    stakeTShares
                                     stakedHearts
                                     blockNumber
                                     data0 
+                                    stakeEnd {{
+                                        id
+                                        payout
+                                        penalty
+                                        daysLate
+                                        timestamp
+                                    }}
                                  }}
                            }}
                """
           ),
-Event('pairHourDatas',
-    """
+    Event('pairHourDatas',
+          """
         query getPairHourDatas {{
             pairHourDatas(
                     first: {0}
@@ -162,7 +169,7 @@ Event('pairHourDatas',
                      }}
         }}
        """
-    )
+          )
 ]
 
 
@@ -226,14 +233,14 @@ def query_cycle_by_generic_number_field(event_name, field, generic_number_start,
     call_data = client.execute(query)
     result_array = call_data[event_name]
     latest_generic_number = find_latest_generic_result(result_array, field)
-    #print(result_array)
+    # print(result_array)
     generic_number = latest_generic_number + 1
     query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
     while len(call_data[event_name]) > 0:
         try:
             call_data = client.execute(query)
             for event in call_data[event_name]:
-                #print(event)
+                # print(event)
                 result_array.append(event)
             latest_generic_number = find_latest_generic_result(call_data[event_name], field)
             generic_number = latest_generic_number + 1
@@ -245,8 +252,8 @@ def query_cycle_by_generic_number_field(event_name, field, generic_number_start,
     return result_array
 
 
-def uniswap_query_cycle_by_generic_number_field(event_name, field, generic_number_start, custom_where_field="") -> object:
-
+def uniswap_query_cycle_by_generic_number_field(event_name, field, generic_number_start,
+                                                custom_where_field="") -> object:
     _transport = AIOHTTPTransport(url="https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2")
 
     _client = Client(transport=_transport, fetch_schema_from_transport=True)
@@ -264,7 +271,7 @@ def uniswap_query_cycle_by_generic_number_field(event_name, field, generic_numbe
         try:
             call_data = _client.execute(query)
             for event in call_data[event_name]:
-                #print(event)
+                # print(event)
                 result_array.append(event)
             latest_generic_number = find_latest_generic_result(call_data[event_name], field)
             generic_number = latest_generic_number + 1

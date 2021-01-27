@@ -40,7 +40,12 @@ csv_columns = ['id',
                'lobbyHexPerEth',
                'lobbyHexAvailable'
                ]
-start_stake_data_results = hexGraphQL.query_cycle_by_block_number('stakeStarts')
+where = """
+             stakeEnd: null
+            ,stakeGoodAccounting: null
+        """
+where = where.format()
+start_stake_data_results = hexGraphQL.query_cycle_by_generic_number_field('stakeStarts', 'blockNumber', 9041184, where) #11030100
 print(len(start_stake_data_results))
 arrayOfExpiringStartStakes = []
 for stake in start_stake_data_results:
@@ -50,7 +55,7 @@ for stake in start_stake_data_results:
     stake['stakeShares'] = int(stake['stakeShares'])
     stake['stakedDays'] = int(stake['stakedDays'])
     stake['stakeId'] = int(stake['stakeId'])
-	
+
     readable = datetime.datetime.fromtimestamp(stake['timestamp'])
     daysStaked = stake['stakedDays']
 
@@ -79,5 +84,8 @@ try:
     with open('C:\\webPRELIM\\endStakesDue1.json', 'w') as f:
         f.write(str(arrayOfExpiringStartStakes))  # json.dump(arrayToWriteToFile, f)discoveredStakesPath2
 except IOError:
-    print("I/O error")
-    print(IOError)
+    print("I/O error, printing to relative folder")
+    with open('endStakesDue1.json', 'w') as f:
+        f.write(str(arrayOfExpiringStartStakes))  # json.dump(arrayToWriteToFile, f)
+    with open('endStakesDue1.json', 'w') as f:
+        f.write(str(arrayOfExpiringStartStakes))  # json.dump(arrayToWriteToFile, f)discoveredStakesPath2
