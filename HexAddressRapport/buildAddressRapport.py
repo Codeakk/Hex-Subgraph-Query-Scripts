@@ -6,27 +6,28 @@ from decimal import Decimal
 # 0x392b95795a73a71a4379a1920b0ae360089f1047 (rich boi)
 # 0x34F48C38695EfE97f192aD8a4B3215e3544C6597 (buys then stakes)
 # 0x55d5c232d921b9eaa6b37b5845e439acd04b4dba eth uniswap 2
-# 0xf6dcdce0ac3001b2f67f750bc64ea5beb37b5824 usdc in
+# 0xf6dcdce0ac3001b2f67f750bc64ea5beb37b5824 usdc uniswap 2
 # 0x0000000000000000000000000000000000000000
 
 class Rapport:
     def __init__(self, address, prices):
         self.address = address
-        self.total_buys = {
+        self.total_buys = {  # collects transfer totals into address
             "totalHexBuys": 0
             , "totalUsdcBuys": 0
         }
-        self.total_sells = {
+        self.total_sells = {  # collects transfer totals out of address
             "totalHexSells": 0
             , "totalUsdcSells": 0
         }
-        self.p_or_l = ""
-        self.leftover_usdc_if_sold = 0
-        self.current_usdc_value = 0
-        self.buys = self.build_buys(prices)
-        self.sells = self.build_sells(prices)
-        self.stake_info = self.build_stake_info(prices)
-        self.differences = self.build_difference(prices)
+        self.p_or_l = ""  # profit or loss
+        self.leftover_usdc_if_sold = 0  # usdc value if account balance is liquidated vs the differences between buys
+        # and sells
+        self.current_usdc_value = 0  # usdc value if account balance is liquidated
+        self.buys = self.build_buys(prices)  # all transfers into address
+        self.sells = self.build_sells(prices)  # all transfers out of address
+        self.stake_info = self.build_stake_info(prices)  # holds stake info
+        self.differences = self.build_difference(prices)  # holds differences between buys sells and earned interest
 
     @staticmethod
     def merge(dict1, dict2):
@@ -36,12 +37,13 @@ class Rapport:
     def closest(lst, K):
         return lst[min(range(len(lst)), key=lambda i: abs(int(lst[i]['time']) - K))]
 
-    def build_buys(self, uniswap_prices):#, from_not:"0x0000000000000000000000000000000000000000"
+    def build_buys(self, uniswap_prices):
         where = """
                    , to: "{0}"
                    
                 """
         where = where.format(self.address)
+        # grab all transfers to the address
         hex_buyer_data_results = hexGraphQL.query_cycle_by_generic_number_field('transfers', 'timestamp', 1576368000,
                                                                                 where)
         total_buys = {
@@ -49,7 +51,7 @@ class Rapport:
             , "totalUsdcBuys": 0
         }
         for item in hex_buyer_data_results:
-            usdc = self.closest(uniswap_prices, int(item['timestamp']))['close']
+            usdc = self.closest(uniswap_prices, int(item['timestamp']))['close']  # find closest uniswap data point
             usdc_value = float(usdc) * (int(item['value']) / 100000000)
             total_buys['totalHexBuys'] += int(item['value'])
             total_buys['totalUsdcBuys'] += usdc_value
@@ -60,7 +62,6 @@ class Rapport:
             }
             self.merge(closest_value, item)
         total_buys['totalHexBuys'] = total_buys['totalHexBuys'] / 100000000
-        self.buys = hex_buyer_data_results
         self.total_buys = total_buys
         return hex_buyer_data_results
 
@@ -70,6 +71,7 @@ class Rapport:
                , to_not:"0x0000000000000000000000000000000000000000"
                """
         where = where.format(self.address)
+        # grab all transfers from the address
         hex_seller_data_results = hexGraphQL.query_cycle_by_generic_number_field('transfers', 'timestamp', 1576368000,
                                                                                  where)
 
@@ -78,7 +80,7 @@ class Rapport:
             , "totalUsdcSells": 0
         }
         for item in hex_seller_data_results:
-            usdc = self.closest(uniswap_prices, int(item['timestamp']))['close']
+            usdc = self.closest(uniswap_prices, int(item['timestamp']))['close']  # find closest uniswap data point
             usdc_value = float(usdc) * (int(item['value']) / 100000000)
             total_sells['totalHexSells'] += int(item['value'])
             total_sells['totalUsdcSells'] += usdc_value
@@ -89,7 +91,6 @@ class Rapport:
             }
             self.merge(closest_value, item)
         total_sells['totalHexSells'] /= 100000000
-        self.sells = hex_seller_data_results
         self.total_sells = total_sells
         return hex_seller_data_results
 
@@ -97,12 +98,12 @@ class Rapport:
         differences = {
             "hex": self.total_buys['totalHexBuys'] - self.total_sells['totalHexSells'] + self.stake_info['interestHex']
             , "usdc": 0
-
         }
-        if self.total_buys['totalUsdcBuys'] < self.total_sells['totalUsdcSells']:
+
+        if self.total_buys['totalUsdcBuys'] < self.total_sells['totalUsdcSells']:  # usdc cost of buys less than sells
             self.p_or_l = "PROFIT"
             differences['usdc'] = self.total_sells['totalUsdcSells'] - self.total_buys['totalUsdcBuys']
-        else:
+        else:  # usdc cost of buys more than sells
             self.p_or_l = "LOSS"
             differences['usdc'] = self.total_buys['totalUsdcBuys'] - self.total_sells['totalUsdcSells']
 
@@ -115,6 +116,8 @@ class Rapport:
     def print_me(self):
 
         print("---Stakes---")
+        print("Currently Staked - {:,} HEX".format(self.stake_info['stakedHex']))
+        print("Current Interest - {:,} HEX".format(self.stake_info['interestHex']))
         print("Total Interest Paid Out - {:,} HEX".format(self.stake_info['paidOutHex']))
         print("Total Interest Paid Out (current worth) - ${:,.2f}".format(self.stake_info['paidOutUsdcCurrentWorth']))
         print("---Stakes---\n")
@@ -164,10 +167,10 @@ class Rapport:
         stake_interest = 0
         for item in global_daily_payout:
             if int(stake['endDay']) > int(item['endDay']) > int(stake['startDay']):
-                payoutPerShare = Decimal(item['payout']) / Decimal(item['shares'])
-                stakeShares = int(stake['stakeShares'])
-                payout_per_share = stakeShares * payoutPerShare
-                stake_interest += payout_per_share
+                payout_per_share = Decimal(item['payout']) / Decimal(item['shares'])
+                stake_shares = int(stake['stakeShares'])
+                payout = stake_shares * payout_per_share
+                stake_interest += payout
 
         if int(stake['startDay']) <= 352 and int(stake['endDay']) > 352:
             stake_interest += self.calc_big_pay_day(stake)
@@ -193,10 +196,10 @@ class Rapport:
         }
         for item in stakes:
             if item['stakeEnd'] is not None:
-                hex = int(item['stakeEnd']['payout']) - int(item['stakeEnd']['penalty'])
+                payout = int(item['stakeEnd']['payout']) - int(item['stakeEnd']['penalty'])
                 usdc = self.closest(uniswap_prices, int(item['stakeEnd']['timestamp']))['close']
-                usdc_value = float(usdc) * (hex / 100000000)
-                stake_totals['paidOutHex'] += hex
+                usdc_value = float(usdc) * (payout / 100000000)
+                stake_totals['paidOutHex'] += payout
                 stake_totals['paidOutUsdcAtEndWorth'] += usdc_value
             else:
                 stake_totals['stakedHex'] += int(item['stakedHearts'])
