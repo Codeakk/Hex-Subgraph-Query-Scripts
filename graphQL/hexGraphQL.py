@@ -71,7 +71,7 @@ events = [
                  }}
                }}
             """
-          ) 
+          )
 ]
 events_by_generic_number = [
     Event('transfers',
@@ -103,6 +103,7 @@ events_by_generic_number = [
                                  ,orderDirection: asc
                                  ,where: {{
                                     {3}_gte:{2}
+                                    {4}
                                  }}
                                  ) 
                          {{
@@ -199,13 +200,25 @@ def query_cycle(event_name, custom_where=""):
     first = 1000
     skip = 0
     query = query_constructor(first, skip, event_name, custom_where)
-    call_data = client.execute(query)
+    while True:
+        try:
+            call_data = client.execute(query)
+        except Exception as e:
+            print(e)
+            continue
+        break
     result_array = call_data[event_name]
     skip = skip + first
     query = query_constructor(first, skip, event_name, custom_where)
     while len(call_data[event_name]) == first and skip < 49000:
         try:
-            call_data = client.execute(query)
+            while True:
+                try:
+                    call_data = client.execute(query)
+                except Exception as e:
+                    print(e)
+                    continue
+                break
             for event in call_data[event_name]:
                 result_array.append(event)
             skip = skip + first
@@ -230,24 +243,38 @@ def query_cycle_by_generic_number_field(event_name, field, generic_number_start,
     skip = 0
     generic_number = generic_number_start
     query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
-    call_data = client.execute(query)
+    while True:
+        try:
+            call_data = client.execute(query)
+        except Exception as e:
+            print(e)
+            continue
+        break
     result_array = call_data[event_name]
+    #print(len(result_array))
     latest_generic_number = find_latest_generic_result(result_array, field)
     # print(result_array)
     generic_number = latest_generic_number + 1
     query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
     while len(call_data[event_name]) > 0:
         try:
-            call_data = client.execute(query)
+            while True:
+                try:
+                    call_data = client.execute(query)
+                except Exception as e:
+                    print(e)
+                    continue
+                break
             for event in call_data[event_name]:
                 # print(event)
                 result_array.append(event)
+                #print(len(result_array))
             latest_generic_number = find_latest_generic_result(call_data[event_name], field)
             generic_number = latest_generic_number + 1
             # print(generic_number)
             query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
         except Exception as e:
-            time.sleep(1)
+            #time.sleep(1)
             print(e)
     return result_array
 
@@ -262,14 +289,24 @@ def uniswap_query_cycle_by_generic_number_field(event_name, field, generic_numbe
     skip = 0
     generic_number = generic_number_start
     query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
-    call_data = _client.execute(query)
+    while True:
+        try:
+            call_data = _client.execute(query)
+        except:
+            continue
+        break
     result_array = call_data[event_name]
     latest_generic_number = find_latest_generic_result(result_array, field)
     generic_number = latest_generic_number + 1
     query = query_constructor_generic_number(first, skip, event_name, generic_number, field, custom_where_field)
     while len(call_data[event_name]) > 0:
         try:
-            call_data = _client.execute(query)
+            while True:
+                try:
+                    call_data = _client.execute(query)
+                except:
+                    continue
+                break
             for event in call_data[event_name]:
                 # print(event)
                 result_array.append(event)
