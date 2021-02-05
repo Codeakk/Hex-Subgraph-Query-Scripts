@@ -95,8 +95,10 @@ class Rapport:
 
     def build_difference(self, uniswap_prices):
         r = self.rapport
-        r['hexDifference'] = r['totalHexBuys'] - Decimal(r['totalHexSells']) + Decimal(r['interestHex'])
+        r['hexDifference'] = Decimal(r['totalHexBuys']) - Decimal(r['totalHexSells']) + Decimal(r['paidOutHex'])
         r['usdcDifference'] = r['totalUsdcBuys'] - r['totalUsdcSells']
+        if r['totalUsdcBuys'] > r['totalUsdcSells']:
+            r['usdcDifference'] *= -1
         current_hex_per_usd = float(uniswap_prices[len(uniswap_prices) - 1]['close'])
         r['currentUsdcValue'] = current_hex_per_usd * float(r['hexDifference']) + r['interestUsdcCurrentWorth']
         r['leftoverUsdcIfSold'] = r['currentUsdcValue'] + r['usdcDifference']
