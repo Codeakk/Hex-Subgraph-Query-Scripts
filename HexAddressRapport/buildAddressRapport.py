@@ -20,9 +20,9 @@ def chunker(seq, size):
 
 #0xd4a17ad38d5264d165db58e72a8cbe715d7dbcf7
 #0xf3eC5e9442EC438892113F98491e0f7317c6f088
-#t = Rapport("0xd4a17ad38d5264d165db58e72a8cbe715d7dbcf7", uni_prices)
-#t.print_me()
-#exit()
+t = Rapport("0xd4a17ad38d5264d165db58e72a8cbe715d7dbcf7", uni_prices)
+t.print_me()
+exit()
 if __name__ == '__main__':
     where = """
                   , totalReceived_gt: 5000000000000000
