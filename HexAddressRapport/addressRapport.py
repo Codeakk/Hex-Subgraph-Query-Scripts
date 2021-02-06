@@ -16,6 +16,7 @@ class Rapport:
             , "leftoverUsdcIfSold": 0
             # usdc value if account balance is liquidated vs the differences between buys/sells
             , "currentUsdcValue": 0  # usdc value if account balance is liquidated
+            , "finishedStakedHex": 0
             , "stakedHex": 0
             , "paidOutHex": 0
             , "paidOutUsdcCurrentWorth": 0
@@ -42,8 +43,9 @@ class Rapport:
         r = self.rapport
         where = """
                    , to: "{0}"
-                   
                 """
+        #, from_not:"0x0000000000000000000000000000000000000000"
+
         where = where.format(r['address'])
         # grab all transfers to the address
         hex_buyer_data_results = hexGraphQL.query_cycle_by_generic_number_field('transfers', 'timestamp', 1,
@@ -70,8 +72,9 @@ class Rapport:
         r = self.rapport
         where = """
                , from: "{0}"
-               , to_not:"0x0000000000000000000000000000000000000000"
+              
                """
+        # , to_not:"0x0000000000000000000000000000000000000000"
         where = where.format(r['address'])
         # grab all transfers from the address
         hex_seller_data_results = hexGraphQL.query_cycle_by_generic_number_field('transfers', 'timestamp', 1,
@@ -95,12 +98,12 @@ class Rapport:
 
     def build_difference(self, uniswap_prices):
         r = self.rapport
-        r['hexDifference'] = Decimal(r['totalHexBuys']) - Decimal(r['totalHexSells']) + Decimal(r['paidOutHex'])
+        r['hexDifference'] = Decimal(r['totalHexBuys']) - Decimal(r['totalHexSells']) #+ Decimal(r['paidOutHex'])
         r['usdcDifference'] = r['totalUsdcBuys'] - r['totalUsdcSells']
         if r['totalUsdcBuys'] > r['totalUsdcSells']:
             r['usdcDifference'] *= -1
         current_hex_per_usd = float(uniswap_prices[len(uniswap_prices) - 1]['close'])
-        r['currentUsdcValue'] = current_hex_per_usd * float(r['hexDifference']) + r['interestUsdcCurrentWorth']
+        r['currentUsdcValue'] = current_hex_per_usd * float(r['hexDifference']) #+ r['interestUsdcCurrentWorth']
         r['leftoverUsdcIfSold'] = r['currentUsdcValue'] + r['usdcDifference']
         if r['leftoverUsdcIfSold'] > 0:
             r['pOrL'] = "PROFIT"
@@ -114,6 +117,7 @@ class Rapport:
         print("Current Interest - {:,} HEX".format(r['interestHex']))
         print("Total Interest Paid Out - {:,} HEX".format(r['paidOutHex']))
         print("Total Interest Paid Out (current worth) - ${:,.2f}".format(r['paidOutUsdcCurrentWorth']))
+        print("Total Interest Paid Out (at each end stake) - ${:,.2f}".format(r['paidOutUsdcAtEndWorth']))
         print("---Stakes---\n")
 
         print("---Buys/Adds---")
@@ -186,8 +190,8 @@ class Rapport:
             if stake['stakeEnd'] is not None:
                 payout = int(stake['stakeEnd']['payout']) - int(stake['stakeEnd']['penalty'])
                 usdc = self.closest(uniswap_prices, int(stake['stakeEnd']['timestamp']))['close']
-                usdc_value = float(usdc) * (payout / 100000000)
                 r['paidOutHex'] += payout
+                usdc_value = float(usdc) * (payout / 100000000)
                 r['paidOutUsdcAtEndWorth'] += usdc_value
             else:
                 r['stakedHex'] += int(stake['stakedHearts'])

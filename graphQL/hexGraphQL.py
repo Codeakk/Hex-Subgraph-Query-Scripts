@@ -143,6 +143,7 @@ events_by_generic_number = [
                                         penalty
                                         daysLate
                                         timestamp
+                                        servedDays
                                     }}
                                  }}
                            }}

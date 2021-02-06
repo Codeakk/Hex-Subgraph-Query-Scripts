@@ -18,10 +18,14 @@ def build_rap(x):
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
-
+#0xd4a17ad38d5264d165db58e72a8cbe715d7dbcf7
+#0xf3eC5e9442EC438892113F98491e0f7317c6f088
+#t = Rapport("0xd4a17ad38d5264d165db58e72a8cbe715d7dbcf7", uni_prices)
+#t.print_me()
+#exit()
 if __name__ == '__main__':
     where = """
-                  , totalReceived_gt: 1000000000000000
+                  , totalReceived_gt: 5000000000000000
             """
     token_holders_data_results = hexGraphQL.query_cycle_by_generic_number_field('tokenHolders', 'numeralIndex', 10,
                                                                                 where)
