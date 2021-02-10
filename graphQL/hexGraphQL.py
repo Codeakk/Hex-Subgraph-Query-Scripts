@@ -91,6 +91,7 @@ events_by_generic_number = [
                         to
                         timestamp
                         value
+                        methodId
                     }}
                 }}
             """

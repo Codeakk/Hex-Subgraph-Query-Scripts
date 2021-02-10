@@ -43,16 +43,17 @@ class Rapport:
     def build_buys(self, uniswap_prices):
         r = self.rapport
         where = """
-                   , to: "{0}"
+                    , to: "{0}"
                 """
-        # , from_not:"0x0000000000000000000000000000000000000000"
-
         where = where.format(r['address'])
         # grab all transfers to the address
         hex_buyer_data_results = hexGraphQL.query_cycle_by_generic_number_field('transfers', 'timestamp', 1,
                                                                                 where)
 
         for buy_transfer in hex_buyer_data_results:
+            #print(buy_transfer)
+            if buy_transfer['methodId'] == 'stakeEnd':
+                continue
             usdc = self.closest(uniswap_prices, int(buy_transfer['timestamp']))[
                 'close']  # find closest uniswap data point
             usdc_value = float(usdc) * (int(buy_transfer['value']) / 100000000)
@@ -64,7 +65,6 @@ class Rapport:
                 , "transactionType": "buy"
             }
             self.merge(closest_value, buy_transfer)
-            # print(buy_transfer)
         r['totalHexBuys'] = r['totalHexBuys'] / 100000000
 
         return hex_buyer_data_results
@@ -72,16 +72,18 @@ class Rapport:
     def build_sells(self, uniswap_prices):
         r = self.rapport
         where = """
-               , from: "{0}"
-
+                , from: "{0}"
                """
-        # , to_not:"0x0000000000000000000000000000000000000000"
+
         where = where.format(r['address'])
         # grab all transfers from the address
         hex_seller_data_results = hexGraphQL.query_cycle_by_generic_number_field('transfers', 'timestamp', 1,
                                                                                  where)
 
         for sell_transfer in hex_seller_data_results:
+            #print(sell_transfer)
+            if sell_transfer['methodId'] == 'stakeStart':
+                continue
             usdc = self.closest(uniswap_prices, int(sell_transfer['timestamp']))[
                 'close']  # find closest uniswap data point
             usdc_value = float(usdc) * (int(sell_transfer['value']) / 100000000)
@@ -93,14 +95,13 @@ class Rapport:
                 , "transactionType": "sell"
             }
             self.merge(closest_value, sell_transfer)
-            # print(sell_transfer)
         r['totalHexSells'] /= 100000000
 
         return hex_seller_data_results
 
     def build_difference(self, uniswap_prices):
         r = self.rapport
-        r['hexDifference'] = Decimal(r['totalHexBuys']) - Decimal(r['totalHexSells'])
+        r['hexDifference'] = Decimal(r['totalHexBuys']) - Decimal(r['totalHexSells']) + Decimal(r['interestHex'])
         if r['hexDifference'] < 0:
             r['hexDifference'] = 0
         r['usdcDifference'] = r['totalUsdcBuys'] - r['totalUsdcSells']
