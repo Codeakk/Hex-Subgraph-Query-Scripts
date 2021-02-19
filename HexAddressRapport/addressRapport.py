@@ -21,8 +21,6 @@ class Rapport:
                 , "interestHex": 0
                 , "interestUsdcCurrentWorth": 0
             }
-            , "totalData": {
-            }
             , "differenceData": {
                 "hexDifference": 0
                 , "usdcDifference": 0
@@ -145,13 +143,13 @@ class Rapport:
                 , "transactionType": "buy"
             }
             self.merge(closest_value, buy_transfer)
-        rbd["uniswapV1"]['hex'] = self.hearts_to_hex(rbd["uniswapV1"]['hex'])
-        rbd["uniswapV2"]['hex'] = self.hearts_to_hex(rbd["uniswapV2"]['hex'])
-        rbd["btcAddressClaimTotal"]['hex'] = self.hearts_to_hex(rbd["btcAddressClaimTotal"]['hex'])
-        rbd["unknownTotal"]['hex'] = self.hearts_to_hex(rbd["unknownTotal"]['hex'])
-        rbd['xfLobbyExitTotal']['hex'] = self.hearts_to_hex(rbd["xfLobbyExitTotal"]['hex'])
-        rbd['stakeEndTotal']['hex'] = self.hearts_to_hex(rbd["stakeEndTotal"]['hex'])
-        rbd['totalHex'] = self.hearts_to_hex(rbd["totalHex"])
+        rbd["uniswapV1"]['hex'] = str(self.hearts_to_hex(rbd["uniswapV1"]['hex']))
+        rbd["uniswapV2"]['hex'] = str(self.hearts_to_hex(rbd["uniswapV2"]['hex']))
+        rbd["btcAddressClaimTotal"]['hex'] = str(self.hearts_to_hex(rbd["btcAddressClaimTotal"]['hex']))
+        rbd["unknownTotal"]['hex'] = str(self.hearts_to_hex(rbd["unknownTotal"]['hex']))
+        rbd['xfLobbyExitTotal']['hex'] = str(self.hearts_to_hex(rbd["xfLobbyExitTotal"]['hex']))
+        rbd['stakeEndTotal']['hex'] = str(self.hearts_to_hex(rbd["stakeEndTotal"]['hex']))
+        rbd['totalHex'] = str(self.hearts_to_hex(rbd["totalHex"]))
 
         return hex_buyer_data_results
 
@@ -197,11 +195,11 @@ class Rapport:
                 , "transactionType": "sell"
             }
             self.merge(closest_value, sell_transfer)
-        rsd["uniswapV1"]['hex'] = self.hearts_to_hex(rsd["uniswapV1"]['hex'])
-        rsd["uniswapV2"]['hex'] = self.hearts_to_hex(rsd["uniswapV2"]['hex'])
-        rsd["unknownTotal"]['hex'] = self.hearts_to_hex(rsd["unknownTotal"]['hex'])
-        rsd['stakeStartTotal']['hex'] = self.hearts_to_hex(rsd["stakeStartTotal"]['hex'])
-        rsd['totalHex'] = self.hearts_to_hex(rsd["totalHex"])
+        rsd["uniswapV1"]['hex'] = str(self.hearts_to_hex(rsd["uniswapV1"]['hex']))
+        rsd["uniswapV2"]['hex'] = str(self.hearts_to_hex(rsd["uniswapV2"]['hex']))
+        rsd["unknownTotal"]['hex'] = str(self.hearts_to_hex(rsd["unknownTotal"]['hex']))
+        rsd['stakeStartTotal']['hex'] = str(self.hearts_to_hex(rsd["stakeStartTotal"]['hex']))
+        rsd['totalHex'] = str(self.hearts_to_hex(rsd["totalHex"]))
 
         return hex_seller_data_results
 
@@ -225,6 +223,8 @@ class Rapport:
             r['pOrL'] = "PROFIT"
         else:
             r['pOrL'] = "LOSS"
+        rdd['hexDifference'] = str(rdd['hexDifference'])
+        rdd['usdcDifference'] = str(rdd['usdcDifference'])
 
     def print_me(self):
         r = self.report
