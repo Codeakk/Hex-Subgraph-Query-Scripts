@@ -11,6 +11,10 @@ class Rapport:
             , "dateCreated": str(datetime.datetime.now())
             , "leftoverUsdcIfSold": 0
             , "currentUsdcValue": 0
+            , "liquid": {
+                    "hex": 0
+                    , "usdc": 0
+            }
             , "stakeData": {
                 "startedStakedHex": 0
                 , "finishedStakedHex": 0
@@ -166,7 +170,7 @@ class Rapport:
                                                                                  where)
 
         for sell_transfer in hex_seller_data_results:
-            print(sell_transfer)
+            #print(sell_transfer)
             found = False
             usdc = self.closest(uniswap_prices, int(sell_transfer['timestamp']))['close']
             if sell_transfer['methodId'] == 'stakeStart':
@@ -218,13 +222,19 @@ class Rapport:
             rdd['usdcDifference'] *= -1
         current_hex_per_usd = float(uniswap_prices[len(uniswap_prices) - 1]['close'])
         r['currentUsdcValue'] = current_hex_per_usd * float(rdd['hexDifference'])
-        r['leftoverUsdcIfSold'] = r['currentUsdcValue'] + rdd['usdcDifference']
+        where = """, where: {{ holderAddress: "{0}" }}"""
+        where = where.format(r['address'])
+        hex_seller_data_result = hexGraphQL.query_cycle('tokenHolders', where)
+        r['liquid']['hex'] = int(hex_seller_data_result[0]['tokenBalance']) / 100000000
+        r['liquid']['usdc'] = current_hex_per_usd * r['liquid']['hex']
+        r['leftoverUsdcIfSold'] = r['currentUsdcValue'] + rdd['usdcDifference'] + r['liquid']['usdc']
         if r['leftoverUsdcIfSold'] > 0:
             r['pOrL'] = "PROFIT"
         else:
             r['pOrL'] = "LOSS"
         rdd['hexDifference'] = str(rdd['hexDifference'])
         rdd['usdcDifference'] = str(rdd['usdcDifference'])
+        r['liquid']['hex'] = str(r['liquid']['hex'])
 
     def print_me(self):
         r = self.report
@@ -244,31 +254,33 @@ class Rapport:
         print("---Stakes---\n")
 
         print("---Buys/Adds---")
-        print("Total stakeEnd - {:,} HEX ".format(rbd['stakeEndTotal']['hex']) + "(${:,.2f})".format(rbd['stakeEndTotal']['usdc']))
-        print("Total xfLobbyExit - {:,} HEX ".format(rbd['xfLobbyExitTotal']['hex']) + "(${:,.2f})".format(rbd['xfLobbyExitTotal']['usdc']))
-        print("Total btcAddressClaimTotal - {:,} HEX ".format(rbd['btcAddressClaimTotal']['hex']) + "(${:,.2f})".format(rbd['btcAddressClaimTotal']['usdc']))
-        print("Total uniswapV1 - {:,} HEX ".format(rbd['uniswapV1']['hex']) + "(${:,.2f})".format(rbd['uniswapV1']['usdc']))
-        print("Total uniswapV2 - {:,} HEX ".format(rbd['uniswapV2']['hex']) + "(${:,.2f})".format(rbd['uniswapV2']['usdc']))
-        print("Total unknown - {:,} HEX ".format(rbd["unknownTotal"]['hex']) + "(${:,.2f})".format(rbd['unknownTotal']['usdc']))
-        print("Total Bought/Add - {:,} HEX ".format(rbd['totalHex']) + "(${:,.2f})".format(rbd['totalUsdc']))
+        print("Total stakeEnd - {:,} HEX ".format(float(rbd['stakeEndTotal']['hex'])) + "(${:,.2f})".format(float(rbd['stakeEndTotal']['usdc'])))
+        print("Total xfLobbyExit - {:,} HEX ".format(float(rbd['xfLobbyExitTotal']['hex'])) + "(${:,.2f})".format(float(rbd['xfLobbyExitTotal']['usdc'])))
+        print("Total btcAddressClaimTotal - {:,} HEX ".format(float(rbd['btcAddressClaimTotal']['hex'])) + "(${:,.2f})".format(rbd['btcAddressClaimTotal']['usdc']))
+        print("Total uniswapV1 - {:,} HEX ".format(float(rbd['uniswapV1']['hex'])) + "(${:,.2f})".format(rbd['uniswapV1']['usdc']))
+        print("Total uniswapV2 - {:,} HEX ".format(float(rbd['uniswapV2']['hex'])) + "(${:,.2f})".format(rbd['uniswapV2']['usdc']))
+        print("Total unknown - {:,} HEX ".format(float(rbd["unknownTotal"]['hex'])) + "(${:,.2f})".format(rbd['unknownTotal']['usdc']))
+        print("Total Bought/Add - {:,} HEX ".format(float(rbd['totalHex'])) + "(${:,.2f})".format(rbd['totalUsdc']))
         print("---Buys/Adds---\n")
 
         print("---Sells/Removes---")
-        print("Total stakeStart - {:,} HEX ".format(rsd['stakeStartTotal']['hex']) + "(${:,.2f})".format(rsd['stakeStartTotal']['usdc']))
-        print("Total uniswapV1 - {:,} HEX ".format(rsd['uniswapV1']['hex']) + "(${:,.2f})".format(rsd['uniswapV1']['usdc']))
-        print("Total uniswapV2 - {:,} HEX ".format(rsd['uniswapV2']['hex']) + "(${:,.2f})".format(rsd['uniswapV2']['usdc']))
-        print("Total unknown - {:,} HEX ".format(rsd["unknownTotal"]['hex']) + "(${:,.2f})".format(rsd['unknownTotal']['usdc']))
-        print("Total Sold/Remove - {:,} HEX ".format(rsd['totalHex']) + "(${:,.2f})".format(rsd['totalUsdc']))
+        print("Total stakeStart - {:,} HEX ".format(float(rsd['stakeStartTotal']['hex'])) + "(${:,.2f})".format(rsd['stakeStartTotal']['usdc']))
+        print("Total uniswapV1 - {:,} HEX ".format(float(rsd['uniswapV1']['hex'])) + "(${:,.2f})".format(rsd['uniswapV1']['usdc']))
+        print("Total uniswapV2 - {:,} HEX ".format(float(rsd['uniswapV2']['hex'])) + "(${:,.2f})".format(rsd['uniswapV2']['usdc']))
+        print("Total unknown - {:,} HEX ".format(float(rsd["unknownTotal"]['hex'])) + "(${:,.2f})".format(rsd['unknownTotal']['usdc']))
+        print("Total Sold/Remove - {:,} HEX ".format(float(rsd['totalHex'])) + "(${:,.2f})".format(rsd['totalUsdc']))
         print("---Sells/Removes---\n")
 
         print("---Difference---")
-        print("{:,} HEX".format(rdd['hexDifference']))
-        print("${:,.2f}".format(rdd['usdcDifference']))
+        print("{:,} HEX from buys vs sells ".format(float(rdd['hexDifference'])))
+        print("for a difference of ${:,.2f}".format(float(rdd['usdcDifference'])))
         print("---Difference---\n")
 
         print("---Result---")
-        print("${:,.2f} USD is the current value".format(r['currentUsdcValue']))
-        print("${:,.2f} is left if sold".format(r['leftoverUsdcIfSold']) + " (" + r['pOrL'] + ")")
+        print("${:,.2f} USD from the currently liquid ".format(r['liquid']['usdc']) + "{:,} HEX".format(float(r['liquid']['hex'])))
+        print("${:,.2f} USD is the current value of ".format(r['currentUsdcValue']) + "{:,} HEX".format(float(rdd['hexDifference'])))
+        print("${:,.2f} is the buy/sell difference ".format(float(rdd['usdcDifference'])))
+        print("${:,.2f} is the current worth of the account".format(r['leftoverUsdcIfSold']) + " (" + r['pOrL'] + ")")
         print("---Result---")
 
     @staticmethod
